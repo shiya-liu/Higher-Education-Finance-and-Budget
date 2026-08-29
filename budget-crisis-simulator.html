@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>University Budget Crisis Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  /* ---------- Light palette (default, also the un-stamped system state) ---------- */
+  :root{
+    --bg:#E9ECE6;
+    --surface:#F7F8F4;
+    --surface-2:#EFF1EB;
+    --ink:#17212B;
+    --muted:#5B6670;
+    --faint:#8A939B;
+    --line:#D3D8CF;
+    --line-strong:#BEC4B9;
+    --accent:#1F6F78;
+    --accent-soft:#D6E6E6;
+    --good:#2E7D5B;
+    --mild:#B0870A;
+    --moderate:#C4611C;
+    --severe:#A83A34;
+    --good-bg:#DDEDE2;
+    --mild-bg:#F1E8CC;
+    --moderate-bg:#F3E1D2;
+    --severe-bg:#F1DAD7;
+    --shadow:0 1px 2px rgba(23,33,43,.06),0 6px 22px rgba(23,33,43,.07);
+  }
+  @media (prefers-color-scheme:dark){
+    :root:not([data-theme="light"]){
+      --bg:#101620;
+      --surface:#18212C;
+      --surface-2:#1E2833;
+      --ink:#E7ECEA;
+      --muted:#94A1AA;
+      --faint:#6B7780;
+      --line:#293440;
+      --line-strong:#37444F;
+      --accent:#54B7C0;
+      --accent-soft:#1B3840;
+      --good:#54B282;
+      --mild:#D6AE43;
+      --moderate:#E28553;
+      --severe:#DA6C64;
+      --good-bg:#173026;
+      --mild-bg:#2E2A14;
+      --moderate-bg:#33241A;
+      --severe-bg:#331E1C;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 26px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#101620;
+    --surface:#18212C;
+    --surface-2:#1E2833;
+    --ink:#E7ECEA;
+    --muted:#94A1AA;
+    --faint:#6B7780;
+    --line:#293440;
+    --line-strong:#37444F;
+    --accent:#54B7C0;
+    --accent-soft:#1B3840;
+    --good:#54B282;
+    --mild:#D6AE43;
+    --moderate:#E28553;
+    --severe:#DA6C64;
+    --good-bg:#173026;
+    --mild-bg:#2E2A14;
+    --moderate-bg:#33241A;
+    --severe-bg:#331E1C;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 26px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    font-size:16px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1200px;margin:0 auto;padding:28px 22px 72px}
+
+  /* ---------- Header ---------- */
+  header.masthead{
+    display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;
+    gap:18px;padding-bottom:20px;border-bottom:1px solid var(--line);margin-bottom:26px;
+  }
+  .eyebrow{
+    font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);
+    font-weight:600;margin:0 0 8px;
+  }
+  h1{
+    font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:clamp(28px,4.6vw,44px);
+    line-height:1.04;margin:0;letter-spacing:-.01em;text-wrap:balance;
+  }
+  .masthead .sub{color:var(--muted);font-size:15px;margin:10px 0 0;max-width:56ch}
+  .masthead-right{display:flex;flex-direction:column;align-items:flex-end;gap:12px}
+  .baseline-chip{
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:10px 16px;box-shadow:var(--shadow);text-align:right;white-space:nowrap;
+  }
+  .baseline-chip .lbl{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .baseline-chip .val{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:22px;color:var(--ink)}
+  .theme-btn{
+    background:var(--surface);border:1px solid var(--line);color:var(--muted);
+    border-radius:9px;padding:7px 12px;font-family:inherit;font-size:13px;cursor:pointer;
+    display:inline-flex;align-items:center;gap:7px;
+  }
+  .theme-btn:hover{border-color:var(--line-strong);color:var(--ink)}
+
+  /* ---------- Scenario bar ---------- */
+  .scenarios{margin-bottom:24px}
+  .scenarios .section-label{
+    font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+    font-weight:600;margin:0 0 10px;
+  }
+  .scenario-row{display:flex;flex-wrap:wrap;gap:9px}
+  .scn{
+    border:1px solid var(--line);background:var(--surface);color:var(--ink);
+    border-radius:999px;padding:8px 15px;font-family:inherit;font-size:13.5px;font-weight:500;
+    cursor:pointer;transition:transform .08s ease,border-color .12s ease,background .12s ease;
+  }
+  .scn:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .scn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+  .scn.reset{color:var(--muted)}
+
+  .scenario-note{
+    margin-top:14px;background:var(--surface);border:1px solid var(--line);
+    border-left:3px solid var(--accent);border-radius:10px;padding:13px 16px;
+  }
+  .scenario-note h3{margin:0 0 4px;font-size:14px;font-weight:600;color:var(--ink)}
+  .scenario-note p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.5}
+
+  /* ---------- Main grid ---------- */
+  .grid{display:grid;grid-template-columns:1fr 360px;gap:24px;align-items:start}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+
+  /* Sliders */
+  .cat{padding:16px 18px;border-bottom:1px solid var(--line)}
+  .cat:last-child{border-bottom:none}
+  .cat-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:2px}
+  .cat-name{font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:var(--accent)}
+  .cat-total{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .cat-total b{color:var(--ink);font-weight:600}
+
+  .slider{padding:12px 0 4px}
+  .slider:not(:last-child){border-bottom:1px dashed var(--line);margin-bottom:6px;padding-bottom:14px}
+  .slider-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:9px}
+  .slider-name{font-size:14.5px;font-weight:500}
+  .slider-name .hint{display:block;font-size:12px;color:var(--faint);font-weight:400;margin-top:1px}
+  .slider-read{display:flex;align-items:baseline;gap:9px;white-space:nowrap}
+  .slider-val{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .slider-contrib{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:6px;
+    background:var(--surface-2);outline:none;margin:0;cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:6px}
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:19px;height:19px;border-radius:50%;
+    background:var(--accent);border:3px solid var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.25);
+    margin-top:-7px;cursor:pointer;
+  }
+  input[type=range]::-moz-range-thumb{
+    width:16px;height:16px;border-radius:50%;background:var(--accent);
+    border:3px solid var(--surface);cursor:pointer;
+  }
+  input[type=range]::-moz-range-track{height:6px;border-radius:6px;background:var(--surface-2)}
+  .scale{display:flex;justify-content:space-between;font-size:11px;color:var(--faint);margin-top:6px;font-family:"IBM Plex Mono",monospace}
+  input[type=range]:focus-visible{box-shadow:0 0 0 3px var(--accent-soft)}
+
+  /* Results panel */
+  .results{position:sticky;top:18px;padding:20px}
+  .results .res-label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:0 0 4px}
+  .bignum{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:clamp(38px,7vw,52px);line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .delta{display:flex;align-items:center;gap:8px;margin-top:10px;font-family:"IBM Plex Mono",monospace;font-size:14px;font-variant-numeric:tabular-nums}
+  .delta .arrow{font-size:15px}
+  .res-rows{margin:18px 0 16px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:14px 0;display:flex;flex-direction:column;gap:9px}
+  .res-rows .row{display:flex;justify-content:space-between;font-size:13.5px}
+  .res-rows .row span:first-child{color:var(--muted)}
+  .res-rows .row span:last-child{font-family:"IBM Plex Mono",monospace;font-weight:500;font-variant-numeric:tabular-nums}
+  .status-pill{
+    display:flex;align-items:center;gap:10px;border-radius:11px;padding:12px 15px;font-weight:600;font-size:15px;
+  }
+  .status-pill .dot{width:11px;height:11px;border-radius:50%;flex:none}
+  .status-pill small{display:block;font-weight:400;font-size:12.5px;margin-top:1px;opacity:.85}
+  .st-good{background:var(--good-bg);color:var(--good)}
+  .st-good .dot{background:var(--good)}
+  .st-mild{background:var(--mild-bg);color:var(--mild)}
+  .st-mild .dot{background:var(--mild)}
+  .st-moderate{background:var(--moderate-bg);color:var(--moderate)}
+  .st-moderate .dot{background:var(--moderate)}
+  .st-severe{background:var(--severe-bg);color:var(--severe)}
+  .st-severe .dot{background:var(--severe)}
+
+  /* Waterfall */
+  .waterfall{margin-top:24px;padding:20px 20px 12px}
+  .wf-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px}
+  .wf-head h2{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:22px;margin:0}
+  .wf-head .note{font-size:12.5px;color:var(--faint)}
+  .wf-scroll{overflow-x:auto}
+  .wf-legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:var(--muted)}
+  .wf-legend span{display:inline-flex;align-items:center;gap:6px}
+  .wf-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+  svg text{font-family:"IBM Plex Mono",monospace}
+
+  footer{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px;line-height:1.6}
+  footer .q{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">Higher-Ed Finance &middot; Teaching Simulation</p>
+      <h1>University Budget Crisis Simulator</h1>
+      <p class="sub">Move the drivers below and watch how enrollment, tuition discounting, state support, and investment income flow through to the university's bottom line. FY2027, illustrative institution.</p>
+    </div>
+    <div class="masthead-right">
+      <button class="theme-btn" id="themeBtn" aria-label="Toggle light or dark theme">◐ Theme</button>
+      <div class="baseline-chip">
+        <div class="lbl">Baseline revenue</div>
+        <div class="val">$500.0M</div>
+      </div>
+    </div>
+  </header>
+
+  <section class="scenarios">
+    <p class="section-label">Crisis Scenarios</p>
+    <div class="scenario-row" id="scenarioRow"></div>
+    <div class="scenario-note" id="scenarioNote">
+      <h3>Baseline &mdash; Balanced Budget</h3>
+      <p>Every driver sits at its planned value. Revenue equals the $500M expense budget, so the operating margin is zero. Pick a scenario above, or move any slider to explore.</p>
+    </div>
+  </section>
+
+  <div class="grid">
+    <!-- Drivers -->
+    <div class="panel" id="driverPanel"></div>
+
+    <!-- Results -->
+    <div class="panel results">
+      <p class="res-label">FY2027 Projected Revenue</p>
+      <div class="bignum" id="revBig">$500.0M</div>
+      <div class="delta" id="revDelta"><span class="arrow">&mdash;</span><span>At baseline</span></div>
+
+      <div class="res-rows">
+        <div class="row"><span>Total revenue</span><span id="rRev">$500.0M</span></div>
+        <div class="row"><span>Expense budget</span><span id="rExp">$500.0M</span></div>
+        <div class="row"><span>Operating margin</span><span id="rMargin">$0.0M</span></div>
+      </div>
+
+      <div class="status-pill st-good" id="statusPill">
+        <span class="dot"></span>
+        <div>Balanced Budget<small id="statusSub">Revenue covers expenses</small></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Waterfall -->
+  <div class="panel waterfall">
+    <div class="wf-head">
+      <h2>How the change adds up</h2>
+      <span class="note">Bars show each revenue line's gain or loss vs. baseline. Dashed line = $500M baseline.</span>
+    </div>
+    <div class="wf-scroll"><svg id="wfSvg" width="820" height="340" viewBox="0 0 820 340" role="img" aria-label="Waterfall chart of revenue changes"></svg></div>
+    <div class="wf-legend">
+      <span><i style="background:var(--accent)"></i>Baseline / Projected total</span>
+      <span><i style="background:var(--good)"></i>Revenue gain</span>
+      <span><i style="background:var(--severe)"></i>Revenue loss</span>
+    </div>
+  </div>
+
+  <footer>
+    <p class="q"><b>Teaching prompt:</b> Move undergraduate enrollment from &minus;3% to &minus;5% to &minus;10%. Notice total revenue falls only about <em>half</em> that percentage &mdash; why? (Net tuition is under half of all revenue, so the rest cushions the loss.) Then run the <em>Demographic Cliff</em>: the school raises discounting to 45% to hold the class, keeping more students but giving back more of every tuition dollar &mdash; and the deficit gets <em>worse</em>. Which lever actually protects the budget?</p>
+    <p>Illustrative model for classroom use. Net tuition = enrollment &times; sticker tuition &times; (1 &minus; discount rate). Auxiliary revenue scales with housing occupancy; endowment distribution = corpus &times; payout rate. Expense budget held fixed at $500M so the operating margin isolates the revenue side.</p>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Baseline structure ($M unless noted) ----------
+  var BASE = {
+    enrollment:20000, tuition:20000, discount:40,   // discount is a % level
+    state:120, grants:60, aux:40, occupancy:90,      // occupancy % level
+    corpus:600, payout:5, other:10                   // payout % level
+  };
+  var EXPENSES = 500;
+
+  // Baseline category values (for deltas / display)
+  var B_NET = BASE.enrollment*BASE.tuition*(1-BASE.discount/100)/1e6; // 240
+  var B_STATE=BASE.state, B_GRANTS=BASE.grants, B_AUX=BASE.aux;
+  var B_ENDOW=BASE.corpus*BASE.payout/100; // 30
+  var B_OTHER=BASE.other;
+
+  // ---------- Slider definitions ----------
+  // kind: 'pct' => value is a % change from baseline; 'level' => absolute level
+  var GROUPS = [
+    { name:"Enrollment-Driven Revenue", key:"tuition", sliders:[
+      {id:"enroll", label:"Undergraduate enrollment", hint:"Headcount vs. plan", kind:"pct", min:-15, max:10, step:1, val:0},
+      {id:"tuit",   label:"Tuition rate (sticker)",   hint:"Published price", kind:"pct", min:-5, max:10, step:1, val:0},
+      {id:"disc",   label:"Tuition discount rate",    hint:"Share of tuition given back as aid", kind:"level", min:30, max:55, step:1, val:40, unit:"%"}
+    ]},
+    { name:"Government Revenue", key:"state", sliders:[
+      {id:"state",  label:"State appropriations", hint:"Legislative funding", kind:"pct", min:-20, max:10, step:1, val:0}
+    ]},
+    { name:"Research & Grants", key:"grants", sliders:[
+      {id:"grants", label:"Grants & contracts", hint:"Sponsored research revenue", kind:"pct", min:-20, max:15, step:1, val:0}
+    ]},
+    { name:"Auxiliary Revenue", key:"aux", sliders:[
+      {id:"occ",    label:"Housing occupancy", hint:"Beds filled (baseline 90%)", kind:"level", min:70, max:100, step:1, val:90, unit:"%"}
+    ]},
+    { name:"Investment & Philanthropy", key:"invest", sliders:[
+      {id:"payout", label:"Endowment payout rate", hint:"Annual draw on $600M corpus", kind:"level", min:3, max:6, step:0.1, val:5, unit:"%"},
+      {id:"other",  label:"Gifts & other revenue", hint:"Annual giving, misc.", kind:"pct", min:-30, max:20, step:1, val:0}
+    ]}
+  ];
+
+  var state = {enroll:0, tuit:0, disc:40, state:0, grants:0, occ:90, payout:5, other:0};
+
+  // ---------- Scenarios ----------
+  var SCENARIOS = {
+    baseline:{name:"Baseline", title:"Baseline — Balanced Budget",
+      desc:"Every driver sits at its planned value. Revenue equals the $500M expense budget, so the operating margin is zero.",
+      set:{enroll:0,tuit:0,disc:40,state:0,grants:0,occ:90,payout:5,other:0}},
+    cliff:{name:"Demographic Cliff", title:"Demographic Cliff",
+      desc:"The pool of graduating high-schoolers shrinks. Freshman enrollment falls 12%, and the university raises its discount rate to 45% trying to hold the class together — which softens the headcount loss but gives back even more tuition per student.",
+      set:{enroll:-12,tuit:0,disc:45,state:0,grants:0,occ:88,payout:5,other:0}},
+    stateCut:{name:"State Funding Cut", title:"State Funding Cut",
+      desc:"A mid-year budget shortfall leads the legislature to cut appropriations by 20%. Tuition and enrollment are unchanged — the shock lands entirely on the government-revenue line.",
+      set:{enroll:0,tuit:0,disc:40,state:-20,grants:0,occ:90,payout:5,other:0}},
+    recession:{name:"Recession", title:"Recession",
+      desc:"A downturn hits every line at once: enrollment −8%, state support −10%, grants −10%, gifts −25%, and the university lifts discounting to 44% to compete on price while trimming its endowment draw to 4.5%.",
+      set:{enroll:-8,tuit:0,disc:44,state:-10,grants:-10,occ:85,payout:4.5,other:-25}},
+    endowCrash:{name:"Endowment Crash", title:"Endowment Crash",
+      desc:"Markets fall sharply. To protect the corpus, the board cuts the payout rate from 5% to 3.5%, and major-gift pledges tied to portfolios slip 15%. Enrollment and state support hold steady.",
+      set:{enroll:0,tuit:0,disc:40,state:0,grants:0,occ:90,payout:3.5,other:-15}},
+    boom:{name:"Enrollment Boom", title:"Enrollment Boom",
+      desc:"A strong admissions year: enrollment +10% and residence halls near full at 98%. With demand high, the university trims its discount rate to 35%, keeping more of each tuition dollar.",
+      set:{enroll:10,tuit:0,disc:35,state:0,grants:0,occ:98,payout:5,other:0}}
+  };
+
+  // ---------- Model ----------
+  function compute(){
+    var enroll = BASE.enrollment*(1+state.enroll/100);
+    var tuition = BASE.tuition*(1+state.tuit/100);
+    var net = enroll*tuition*(1-state.disc/100)/1e6;
+    var st = BASE.state*(1+state.state/100);
+    var gr = BASE.grants*(1+state.grants/100);
+    var aux = BASE.aux*(state.occ/BASE.occupancy);
+    var endow = BASE.corpus*(state.payout/100);
+    var oth = BASE.other*(1+state.other/100);
+    var total = net+st+gr+aux+endow+oth;
+    return {net:net, state:st, grants:gr, aux:aux, endow:endow, other:oth, total:total,
+            margin:total-EXPENSES};
+  }
+
+  // ---------- Formatting ----------
+  function fmtM(v){ return "$"+(Math.round(v*10)/10).toFixed(1)+"M"; }
+  function fmtSigned(v){ var s=(v>=0?"+":"−"); return s+"$"+Math.abs(Math.round(v*10)/10).toFixed(1)+"M"; }
+
+  // ---------- Build DOM ----------
+  var panel = document.getElementById("driverPanel");
+  GROUPS.forEach(function(g){
+    var cat = document.createElement("div"); cat.className="cat";
+    var head = document.createElement("div"); head.className="cat-head";
+    head.innerHTML = '<span class="cat-name">'+g.name+'</span>'+
+                     '<span class="cat-total" id="cat-'+g.key+'"></span>';
+    cat.appendChild(head);
+    g.sliders.forEach(function(s){
+      var el = document.createElement("div"); el.className="slider";
+      el.innerHTML =
+        '<div class="slider-top">'+
+          '<div class="slider-name">'+s.label+'<span class="hint">'+s.hint+'</span></div>'+
+          '<div class="slider-read"><span class="slider-val" id="val-'+s.id+'"></span>'+
+          '<span class="slider-contrib" id="con-'+s.id+'"></span></div>'+
+        '</div>'+
+        '<input type="range" id="rng-'+s.id+'" min="'+s.min+'" max="'+s.max+'" step="'+s.step+'" value="'+s.val+'" '+
+          'aria-label="'+s.label+'">'+
+        '<div class="scale"><span>'+scaleLabel(s,s.min)+'</span><span>'+scaleLabel(s,s.max)+'</span></div>';
+      cat.appendChild(el);
+      panel.appendChild(cat); // append per-slider is fine; cat already in DOM after first
+    });
+    if(!cat.parentNode) panel.appendChild(cat);
+  });
+  // ensure each cat appended once
+  (function fixDom(){})();
+
+  function scaleLabel(s,v){
+    if(s.kind==="level") return v+(s.unit||"");
+    return (v>0?"+":"")+v+"%";
+  }
+  function sliderReadout(s,v){
+    if(s.kind==="level") return v+(s.unit||"");
+    return (v>0?"+":"")+v+"%";
+  }
+
+  // Scenario buttons
+  var row = document.getElementById("scenarioRow");
+  Object.keys(SCENARIOS).forEach(function(k){
+    var b=document.createElement("button");
+    b.className="scn"+(k==="baseline"?" reset active":"");
+    b.textContent=(k==="baseline"?"↺ ":"")+SCENARIOS[k].name;
+    b.setAttribute("data-scn",k);
+    b.addEventListener("click",function(){ applyScenario(k); });
+    row.appendChild(b);
+  });
+
+  // Wire sliders
+  var idToSlider={};
+  GROUPS.forEach(function(g){g.sliders.forEach(function(s){idToSlider[s.id]=s;});});
+  Object.keys(idToSlider).forEach(function(id){
+    var rng=document.getElementById("rng-"+id);
+    rng.addEventListener("input",function(){
+      state[stKey(id)] = parseFloat(rng.value);
+      markManual();
+      render();
+    });
+  });
+
+  function stKey(id){
+    return {enroll:"enroll",tuit:"tuit",disc:"disc",state:"state",grants:"grants",occ:"occ",payout:"payout",other:"other"}[id];
+  }
+
+  function applyScenario(k){
+    var sc=SCENARIOS[k];
+    Object.keys(sc.set).forEach(function(key){ state[key]=sc.set[key]; });
+    // push to inputs
+    for(var id in idToSlider){ document.getElementById("rng-"+id).value = state[stKey(id)]; }
+    // active button
+    Array.prototype.forEach.call(row.children,function(b){ b.classList.toggle("active", b.getAttribute("data-scn")===k); });
+    var note=document.getElementById("scenarioNote");
+    note.innerHTML='<h3>'+sc.title+'</h3><p>'+sc.desc+'</p>';
+    render();
+  }
+  function markManual(){
+    // when user drags, clear scenario highlight (unless it still matches baseline)
+    Array.prototype.forEach.call(row.children,function(b){ b.classList.remove("active"); });
+    var note=document.getElementById("scenarioNote");
+    note.innerHTML='<h3>Custom mix</h3><p>You&rsquo;re adjusting drivers by hand. Watch the projected revenue and the waterfall update in real time, or click a scenario to jump to a preset.</p>';
+  }
+
+  // ---------- Render ----------
+  function render(){
+    var r=compute();
+
+    // per-slider readouts + contributions
+    setSlider("enroll", B_NET);   // contribution shown at category level instead
+    // individual readouts
+    for(var id in idToSlider){
+      var s=idToSlider[id];
+      document.getElementById("val-"+id).textContent = sliderReadout(s, state[stKey(id)]);
+    }
+    // contribution hints (money impact for the key movers)
+    document.getElementById("con-enroll").textContent = "";
+    document.getElementById("con-tuit").textContent = "";
+    document.getElementById("con-disc").textContent = "";
+    document.getElementById("con-state").textContent = fmtSigned(r.state-B_STATE);
+    document.getElementById("con-grants").textContent = fmtSigned(r.grants-B_GRANTS);
+    document.getElementById("con-occ").textContent = fmtSigned(r.aux-B_AUX);
+    document.getElementById("con-payout").textContent = fmtSigned(r.endow-B_ENDOW);
+    document.getElementById("con-other").textContent = fmtSigned(r.other-B_OTHER);
+
+    // category totals
+    document.getElementById("cat-tuition").innerHTML = "Net tuition <b>"+fmtM(r.net)+"</b>";
+    document.getElementById("cat-state").innerHTML = "<b>"+fmtM(r.state)+"</b>";
+    document.getElementById("cat-grants").innerHTML = "<b>"+fmtM(r.grants)+"</b>";
+    document.getElementById("cat-aux").innerHTML = "<b>"+fmtM(r.aux)+"</b>";
+    document.getElementById("cat-invest").innerHTML = "<b>"+fmtM(r.endow+r.other)+"</b>";
+
+    // big number + delta
+    document.getElementById("revBig").textContent = fmtM(r.total);
+    var d = r.total-EXPENSES;
+    var dpct = d/EXPENSES*100;
+    var de = document.getElementById("revDelta");
+    if(Math.abs(d)<0.05){
+      de.innerHTML='<span class="arrow">—</span><span>At baseline ($500.0M)</span>';
+      de.style.color="var(--muted)";
+    } else {
+      var up=d>0;
+      de.innerHTML='<span class="arrow">'+(up?"▲":"▼")+'</span><span>'+fmtSigned(d)+
+        '  ('+(dpct>0?"+":"−")+Math.abs(dpct).toFixed(1)+'% vs. baseline)</span>';
+      de.style.color = up?"var(--good)":"var(--severe)";
+    }
+
+    // rows
+    document.getElementById("rRev").textContent=fmtM(r.total);
+    document.getElementById("rExp").textContent=fmtM(EXPENSES);
+    var mEl=document.getElementById("rMargin");
+    mEl.textContent=fmtSigned(r.margin);
+    mEl.style.color = r.margin>=0?"var(--good)":"var(--severe)";
+
+    // status
+    setStatus(r.margin/EXPENSES*100);
+
+    // waterfall
+    drawWaterfall(r);
+  }
+  function setSlider(){}
+
+  function setStatus(marginPct){
+    var pill=document.getElementById("statusPill");
+    var sub=document.getElementById("statusSub");
+    var cls, txt, sxt;
+    if(marginPct>=0.05){ cls="st-good"; txt="Surplus"; sxt="Revenue exceeds the expense budget"; }
+    else if(marginPct> -0.05){ cls="st-good"; txt="Balanced Budget"; sxt="Revenue covers expenses"; }
+    else if(marginPct>=-3){ cls="st-mild"; txt="Mild Deficit"; sxt="Gap under 3% of budget — manageable"; }
+    else if(marginPct>=-8){ cls="st-moderate"; txt="Moderate Deficit"; sxt="Gap of 3–8% — cuts or reserves needed"; }
+    else { cls="st-severe"; txt="Severe Deficit"; sxt="Gap over 8% — structural crisis"; }
+    pill.className="status-pill "+cls;
+    pill.querySelector("div").firstChild.nodeValue=txt;
+    sub.textContent=sxt;
+  }
+
+  // ---------- Waterfall ----------
+  function drawWaterfall(r){
+    var svg=document.getElementById("wfSvg");
+    var steps=[
+      {label:"Baseline", type:"total", value:EXPENSES},
+      {label:"Net Tuition", type:"delta", delta:r.net-B_NET},
+      {label:"State", type:"delta", delta:r.state-B_STATE},
+      {label:"Grants", type:"delta", delta:r.grants-B_GRANTS},
+      {label:"Auxiliary", type:"delta", delta:r.aux-B_AUX},
+      {label:"Endowment", type:"delta", delta:r.endow-B_ENDOW},
+      {label:"Gifts/Other", type:"delta", delta:r.other-B_OTHER},
+      {label:"Projected", type:"total", value:r.total}
+    ];
+
+    // geometry
+    var W=820, H=340, mL=44, mR=14, mT=24, mB=54;
+    var plotW=W-mL-mR, plotH=H-mT-mB;
+    var n=steps.length, gap=14, bw=(plotW-gap*(n-1))/n;
+
+    // domain from all cumulative points
+    var cum=0, pts=[EXPENSES, r.total];
+    steps.forEach(function(s){
+      if(s.type==="total"){ cum=s.value; pts.push(s.value); }
+      else { pts.push(cum); cum+=s.delta; pts.push(cum); }
+    });
+    var dmin=Math.min.apply(null,pts), dmax=Math.max.apply(null,pts);
+    var pad=Math.max((dmax-dmin)*0.18, 14);
+    var lo=dmin-pad, hi=dmax+pad;
+    function y(v){ return mT+(hi-v)/(hi-lo)*plotH; }
+
+    var css=getComputedStyle(document.documentElement);
+    var cAccent=css.getPropertyValue("--accent").trim();
+    var cGood=css.getPropertyValue("--good").trim();
+    var cSevere=css.getPropertyValue("--severe").trim();
+    var cLine=css.getPropertyValue("--line-strong").trim();
+    var cInk=css.getPropertyValue("--ink").trim();
+    var cMuted=css.getPropertyValue("--muted").trim();
+
+    var s="";
+    // baseline reference line at 500
+    var yb=y(EXPENSES);
+    s+='<line x1="'+mL+'" y1="'+yb.toFixed(1)+'" x2="'+(W-mR)+'" y2="'+yb.toFixed(1)+'" stroke="'+cMuted+'" stroke-width="1" stroke-dasharray="4 4" opacity="0.6"/>';
+    s+='<text x="'+(W-mR)+'" y="'+(yb-5).toFixed(1)+'" text-anchor="end" font-size="10.5" fill="'+cMuted+'">baseline $500M</text>';
+
+    cum=0;
+    var prevX=null, prevYCum=null;
+    steps.forEach(function(st,i){
+      var x=mL+i*(bw+gap);
+      var barTop,barBot,color,valLabel,cumAfter;
+      if(st.type==="total"){
+        barTop=y(st.value); barBot=y(lo);
+        color=cAccent; valLabel=fmtM(st.value); cum=st.value; cumAfter=st.value;
+      } else {
+        var start=cum; cumAfter=cum+st.delta;
+        barTop=y(Math.max(start,cumAfter)); barBot=y(Math.min(start,cumAfter));
+        color=st.delta>=0?cGood:cSevere;
+        valLabel=fmtSigned(st.delta);
+        cum=cumAfter;
+      }
+      var hgt=Math.max(barBot-barTop,1.5);
+      // connector from previous cumulative level
+      if(prevX!==null){
+        var yc=y(prevYCum);
+        s+='<line x1="'+(prevX+bw).toFixed(1)+'" y1="'+yc.toFixed(1)+'" x2="'+x.toFixed(1)+'" y2="'+yc.toFixed(1)+'" stroke="'+cLine+'" stroke-width="1" stroke-dasharray="3 3"/>';
+      }
+      s+='<rect x="'+x.toFixed(1)+'" y="'+barTop.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+hgt.toFixed(1)+'" rx="2.5" fill="'+color+'"/>';
+      // value label above bar
+      if(!(st.type==="delta" && Math.abs(st.delta)<0.05)){
+        s+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(barTop-6).toFixed(1)+'" text-anchor="middle" font-size="11" font-weight="600" fill="'+(st.type==="total"?cInk:color)+'">'+valLabel+'</text>';
+      }
+      // category label below
+      s+='<text x="'+(x+bw/2).toFixed(1)+'" y="'+(H-mB+18).toFixed(1)+'" text-anchor="middle" font-size="10.5" fill="'+cMuted+'">'+st.label+'</text>';
+      prevX=x; prevYCum=cumAfter;
+    });
+
+    svg.innerHTML=s;
+  }
+
+  // ---------- Theme toggle ----------
+  var tb=document.getElementById("themeBtn");
+  tb.addEventListener("click",function(){
+    var root=document.documentElement;
+    var cur=root.getAttribute("data-theme");
+    var isDark;
+    if(cur){ isDark=cur==="dark"; }
+    else { isDark=window.matchMedia&&window.matchMedia("(prefers-color-scheme:dark)").matches; }
+    root.setAttribute("data-theme", isDark?"light":"dark");
+    render(); // recolor svg from new tokens
+  });
+
+  // init
+  applyScenario("baseline");
+})();
+</script>
+</body>
+</html>
